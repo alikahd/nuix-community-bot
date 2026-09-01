@@ -1376,9 +1376,46 @@ bot.catch((err) => {
 });
 
 // =====================================================
-// START
+// START BOT + RENDER HTTP SERVER
 // =====================================================
 
+const http = require("http");
+
+const PORT = process.env.PORT || 10000;
+
+const server = http.createServer((req, res) => {
+  if (req.url === "/health" || req.url === "/") {
+    res.writeHead(200, {
+      "Content-Type": "application/json"
+    });
+
+    res.end(
+      JSON.stringify({
+        status: "ok",
+        bot: "NUIX Community Bot",
+        running: true
+      })
+    );
+
+    return;
+  }
+
+  res.writeHead(404, {
+    "Content-Type": "application/json"
+  });
+
+  res.end(
+    JSON.stringify({
+      error: "Not found"
+    })
+  );
+});
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`🌐 HTTP server running on port ${PORT}`);
+});
+
+// Start Telegram bot using polling
 bot.launch();
 
 console.log("✅ NUIX Community Bot is running...");
@@ -1387,5 +1424,12 @@ console.log("💾 Context memory: ON");
 console.log("🔌 External AI/API: NONE");
 
 // Graceful shutdown
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+process.once("SIGINT", () => {
+  bot.stop("SIGINT");
+  server.close();
+});
+
+process.once("SIGTERM", () => {
+  bot.stop("SIGTERM");
+  server.close();
+});
